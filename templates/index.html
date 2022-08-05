@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.4/css/bulma.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.js"
+        integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk=" crossorigin="anonymous"></script>
+    <title>Mosaic</title>
+</head>
+
+<body>
+    <div class="content has-text-centered mt-6">
+        <div class="colmuns mb-6">
+            <h1 class="colmun">AI Mosaic</h1>
+        </div>
+        <p></p>
+        <form id="send_form" method="post" enctype="multipart/form-data">
+            <div class="file has-name has-text-centered">
+                <label class="file-label m-auto">
+                    <input id="user_img" name="user_image" class="file-input" type="file" value="" />
+                    <span class="file-cta">
+                        <span class="file-icon">
+                            <i class="fas fa-upload"></i>
+                        </span>
+                        <span class="file-label">ファイルを選択...</span>
+                    </span>
+                    <span id="diplay_filename" class="file-name">未選択</span>
+                </label>
+            </div>
+            <br />
+            <!-- <input id="user_img" name="user_image" class="" type="file"  value=""/> -->
+            <div id="mosaiced_area">
+                <p>結果</p>
+                <img id="preview" style="max-width:200px ;">
+            </div>
+            <button id="submit_btn" type="button" onclick="test_ajax()"
+                class="button is-rounded is-primary">GO!</button>
+        </form>
+    </div>
+</body>
+
+</html>
+
+<script>
+    function test_ajax() {
+        // var fd = new FormData();
+        // fd.append('image',$('#user_img')[0].files[0]);
+
+        let fr = new FileReader();
+        fr.readAsDataURL($('#user_img')[0].files[0]);
+
+        fr.addEventListener('load', function (e) {
+            console.log(e.target.result);
+            let data = { 'image': e.target.result };
+            json = JSON.stringify(data);  // object型からJSON文字列(string型)に変換
+
+            $.ajax({
+                type: "POST",
+                url: "/api",
+                data: json,
+                contentType: "application/json",
+                success: function (res) {
+                    console.log(res);
+                    const file_area = document.getElementById('mosaiced_area');
+                    const img_element = document.createElement('img');
+                    img_element.src = res.image;
+                    file_area.append(img_element);
+                },
+                error: function (res) {
+                    alert("error");
+                }
+            });
+        })
+
+
+        // data = { "image": fr.get('image') };
+        // console.log(data);
+        // json = JSON.stringify(data);  // object型からJSON文字列(string型)に変換
+        // console.log(json);
+
+        // $.ajax({
+        //     type: "POST",
+        //     url: "/api",
+        //     data: data,
+        //     contentType: "application/json",
+        //     success: function (msg) {
+        //         console.log(msg);
+        //     },
+        //     error: function (msg) {
+        //         console.log("error");
+        //     }
+        // });
+    }
+
+    $(function () {
+
+        $('#submit_btn').on("click", () => {
+            var fd = new FormData();
+            fd.append('image', $('#user_img')[0].files[0]);
+            // console.log(fd.get("image"));
+            // var csrftoken = $('meta[name=csrf-token]').attr('content')
+            // $.ajaxSetup({
+            //     beforeSend: function(xhr, settings) {
+            //         if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type)) {
+            //             xhr.setRequestHeader("X-CSRFToken", csrftoken)
+            //         }
+            //     }
+            // })
+
+            // $.ajax({
+            //     url:'/api',
+            //     type:'POST',
+            //     data:"test",
+            //     dataType:'text/plane',
+            //     processData: false,
+            //     contentType: false,
+            // }).done((res)=>{
+            //     alert("ok");
+            //     console.log(res);
+            // }).fail(()=> {
+            //     alert("nonee");
+            // });
+        })
+
+
+        //ファイル名の処理
+
+        // ファイル選択ボタンの要素を取得します。
+        const fileElement = document.getElementById("user_img");
+
+        // ファイル選択ボタンのchangeイベントに関数を設定します。
+        fileElement.addEventListener("change", fileChanged, false);
+
+        /***************************************
+         ファイルが変更された際の処理を行う関数
+         ***************************************/
+        function fileChanged() {
+            // 選択されているファイルを取得します。
+            const fileList = this.files;
+
+            // ファイルが選択されているか確認します。
+            if (fileList.length > 0) {
+                // 選択されたファイルの名前を取得します。
+                const name = fileList[0].name;
+
+                // ファイル名を指定する要素を取得します。
+                const fileName = document.getElementById("diplay_filename");
+
+                // ファイル名を設定して表示します。
+                fileName.textContent = name;
+            }
+        }
+
+        //アップロードされた画像を表示
+        $('#user_img').on('change', function (e) {
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                $("#preview").attr('src', e.target.result);
+            }
+            reader.readAsDataURL(e.target.files[0]);
+        });
+
+    })
+</script>
